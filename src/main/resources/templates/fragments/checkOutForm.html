@@ -1,0 +1,166 @@
+<!--
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Checkout Form</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  &lt;!&ndash; Stripe JS &ndash;&gt;
+  <script src="https://js.stripe.com/v3/"></script>
+</head>
+
+<body>
+<div class="container" th:fragment="checkOutForm">
+  <div class="row">
+    <div class="col">
+      <div class="card">
+        <div class="card-header">
+          <h4>Check Out Form</h4>
+        </div>
+        <div class="card-body">
+          <table class="table table-striped" >
+            <thead>
+            <tr>
+              <th>Id</th>
+              <th>Title</th>
+              <th>Price</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="item:${cartItems}">
+              <td th:text="${item.id}"></td>
+              <td th:text="${item.title}"></td>
+              <td th:text="${item.price}"></td>
+            </tr>
+            </tbody>
+          </table>
+          <form id="checkout-form" th:object="${customer}" th:action="@{/customer/save}" method="post" enctype="multipart/form-data" >
+            <div class="form-group">
+              <label for="name">Name</label>
+              <input type="text" id="name" th:field="*{name}" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label for="ph">Phone Number</label>
+              <input type="number" id="ph" th:field="*{phoneNumber}" class="form-control" required>
+              <div class="form-group">
+                <label for="address">Address</label>
+                <input type="text" id="address" th:field="*{address}" class="form-control" required>
+              </div>
+              <div class="form-group">
+                <label for="zipcode">Zipcode</label>
+                <input type="number" id="zipcode" th:field="*{zipcode}" class="form-control" required>
+              </div>
+              <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" th:field="*{email}" class="form-control" required>
+              </div>
+
+            &lt;!&ndash; payment method &ndash;&gt;
+            <div class="form-group">
+              <label>Payment Method</label>
+              <div class="form-check">
+                <input type="radio" class="form-check-input" id="qrCode" name="paymentMethod" value="QR Code" th:filed="*{paymentMethod}" required>
+                <label for="qrCode" class="form-check-label">QR Code Scan</label>
+              </div> <div class="form-check">
+                <input type="radio" class="form-check-input" id="cardPayment" name="paymentMethod" value="Card" th:filed="*{paymentMethod}" required>
+                <label for="cardPayment" class="form-check-label">Card Payment</label>
+              </div> <div class="form-check">
+                <input type="radio" class="form-check-input" id="cashOnDelivery" name="paymentMethod" value="Cash on Delivery" th:filed="*{paymentMethod}" required>
+                <label for="cashOnDelivery" class="form-check-label">Cash on Delivery</label>
+              </div>
+            </div>
+
+            &lt;!&ndash; payment Selection (conditionally displayed) &ndash;&gt;
+            <div id="qrCodeSection" class="payment-section" style="display: none;">
+              <h5>Scan QR Code</h5>
+              <img th:src="@{/images/qr-code.png}" alt="QR Code" class="img-fluid">
+              <p>Please scan the QR code with your mobile banking app</p>
+              <div class="form-group">
+                <label for="paymentReceipt">Upload Payment Receipt</label>
+                <input type="file" id="paymentReceipt" name="receiptFile" class="form-control-file" accept="image/*">
+              </div>
+            </div>
+
+              <div id="cardPaymentSection" class="payment-section" style="display: none;">
+               <div class="form-group">
+                 <label for="card-element">Card Details</label>
+                 <div id="card-element"  class="form-control">
+                   &lt;!&ndash; a stripe element will be inserted here &ndash;&gt;
+                 </div>
+                 <div id="card-errors" class="text-danger" role="alert"></div>
+               </div>
+              </div>
+            <div id="cashOnDeliverySection" class="payment-section" style="display: none;">
+              <p>You Will pay in cash upon delivery</p>
+            </div>
+            <button type="submit" class="btn btn-primary">Submit</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+
+  //stripe setup
+  const stripe = Stripe('pk_test_51QCKP3GlwmYUmUDGQ2XvmOxstJfrWUxJ6DVKFmvZAySEULsew66W4exUS45zdaHn4NO1Nkp06n6FJYMZpY5TMWJr00NvpDe8zG')
+  const elements = stripe.elements();
+  const card = elements.create('card');
+  card.mount('#card-element');
+
+  // handel form submission
+  const form = document.getElementById('checkout-form');
+  form.addEventListener('submit',async (event) => {
+    event.preventDefault();
+    const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+    const receiptFile = document.getElementById('paymentReceipt').files[0];
+
+    if(paymentMethod === 'Card'){
+      const {error, paymentIntent} = await stripe.confirmCardPayment("[[${paymentIntentClientSecret}]]",{
+        payment_method:{
+          card: card,
+          }
+        });
+        if(error){
+        document.getElementById('card-errors').textContent = error.message;
+        }else{
+        form.submit();
+        }
+      }
+      else if(paymentMethod === 'QR Code' && !receiptFile){
+      alert("Please upload your payment receipt.");
+      } else{
+      form.submit();
+      }
+  });
+
+  document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('input[name="paymentMethod"]').forEach((input) => {
+      input.addEventListener('change', function () {
+        // Hide all payment sections
+        document.querySelectorAll('.payment-section').forEach((section) => {
+          section.style.display = 'none';
+        });
+const selectedPaymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+        if (selectedPaymentMethod === 'QR Code') {
+          document.getElementById('qrCodeSection').style.display = 'block';
+        } else if (selectedPaymentMethod === 'Card') {
+          document.getElementById('cardPaymentSection').style.display = 'block';
+        } else {
+          document.getElementById('cashOnDeliverySection').style.display = 'block';
+        }
+      });
+    });
+const checkedRadio = document.querySelector('input[name="paymentMethod"]:checked');
+    if (checkedRadio) {
+      checkedRadio.dispatchEvent(new Event('change'));
+    }
+  });
+
+
+</script>
+</body>
+</html>-->

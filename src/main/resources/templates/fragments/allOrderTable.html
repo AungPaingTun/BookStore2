@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Title</title>
+</head>
+<body th:fragment="allOrder" class="place-order">
+<h2>All Orders</h2>
+<table class="table table-bordered">
+  <thead>
+  <tr>
+    <th>Order Id</th>
+    <th>Customer Name</th>
+    <th>Items</th>
+    <th>Total Prices</th>
+    <th>Status</th>
+    <th>Actions</th>
+  </tr>
+  </thead>
+  <tbody>
+  <tr th:each="order:${allOrders}">
+    <td th:text="${order.id}"></td>
+    <td th:text="${order.customer.name}"></td>
+    <td>
+      <ul>
+        <li th:each="book:${order.books}" th:text="${book.title}"></li>
+      </ul>
+    </td>
+    <td th:text="${#numbers.formatDecimal(order.totalAmount/100,2,2)}"></td>
+    <td th:text="${order.orderStatus}"></td>
+    <td>
+      <form th:action="@{/order/update-status/{id}(id=${order.id})}" method="post">
+        <select name="newStatus" required>
+          <option value="">Select Status</option>
+          <option value="PLACE" th:selected="${order.orderStatus == 'PLACED'}">Placed</option>
+          <option value="ONGOING" th:selected="${order.orderStatus == 'ONGOING'}">Ongoing</option>
+          <option value="DELIVERED" th:selected="${order.orderStatus == ' DELIVERED'}">Delivered</option>
+        </select>
+        <button type="submit" class="btn btn-success">Update Status</button>
+      </form>
+      <a th:href="@{/admin/order/delete/{id}(id=${order.id})}" class="mt-2 btn btn-sm btn-danger">Delete</a>
+    </td>
+  </tr>
+  </tbody>
+</table>
+
+</body>
+</html>

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en" th:replace="~{layout/shopViewLayout::layout(~{::main})}" xmlns:th="http://thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+ <main role="main">
+     <div class="container">
+         <div class="row">
+             <div class="col">
+                 <div class="card">
+                     <div class="card-header">
+                         <h4>Checkout Successful</h4>
+                     </div>
+                     <div class="card-body">
+                         <div class="alert alert-success">
+                             <h5>YOur Order has been successfully placed!</h5>
+                             <p>Thank you for your purchase. We will Send you a confirmation Email with the order details shortly.</p>
+                         </div>
+                         <div>
+                             <h5>Order Summary</h5>
+                             <table class="table table-striped">
+                                 <thead>
+                                 <tr>
+                                     <th>Id</th>
+                                     <th>Title</th>
+                                     <th>Price</th>
+                                 </tr>
+                                 </thead>
+                                 <tbody>
+                                 <tr th:each="item:${cartItems}">
+                                     <td th:text="${item.id}"></td>
+                                     <td th:text="${item.title}"></td>
+                                     <td th:text="${item.price}"></td>
+                                 </tr>
+                                 </tbody>
+                                 <tfoot>
+                                 <tr>
+                                     <td colspan="2" class="text-right"><strong>Total:</strong></td>
+                                     <td id="total-price" th:text="${item.price}"></td>
+                                 </tr>
+                                 </tfoot>
+                             </table>
+                         </div>
+
+                         <div>
+                             <H5>Customer Information</H5>
+                             <p><strong>Name:</strong> <span th:text="${customer.name}"></span></p>
+                             <p><strong>Phone:</strong> <span th:text="${customer.phoneNumber}"></span></p>
+                             <p><strong>Address:</strong> <span th:text="${customer.address}"></span></p>
+                             <p><strong>Email:</strong> <span th:text="${customer.email}"></span></p>
+                         </div>
+
+
+                         <div>
+                             <h5>Payment Method</h5>
+                             <p th:text="'Payment Method: ' + ${customer.paymentMethod}"></p>
+                         </div>
+
+                         <div class="text-center mt-4">
+                             <a href="#" th:href="@{/}" class="btn btn-primary ">Return to Home</a>
+                         </div>
+                     </div>
+                 </div>
+             </div>
+         </div>
+     </div>
+ </main>
+ <script>
+     document.addEventListener('DOMContentLoaded', function() {
+         let totalPrice = 0;
+         const priceElements = document.querySelectorAll('.item-price');
+         priceElements.forEach(function(priceElement) {
+             const price = parseFloat(priceElement.textContent);
+             if (!isNaN(price)) {
+                 totalPrice += price;
+             }});
+         document.getElementById('total-price').textContent = totalPrice.toFixed(2);
+     });
+ </script>
+</body>
+</html>
